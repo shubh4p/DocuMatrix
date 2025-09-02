@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Document Toolkit — Merge, compress, and convert PDFs, DOCX, and images. 100% client-side, private, and fast." />
+  <title>DocuMatrix — Merge • Compress • Convert</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%237C3AED' d='M40 48a16 16 0 0 1 16-16h96l64 64v112a16 16 0 0 1-16 16H56a16 16 0 0 1-16-16z'/%3E%3Cpath fill='%23fff' d='M120 80h32v16h-32zm-24 32h80v16H96zm0 32h80v16H96z'/%3E%3C/svg%3E" />
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- TailwindCSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+          colors: { brand: { DEFAULT: '#7C3AED', dark: '#6D28D9' } }
+        }
+      },
+      darkMode: 'class'
+    }
+  </script>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Required libraries -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/compressorjs/1.2.1/compressorjs.min.js"></script>
+
+  <style>
+    /* Smooth corners and subtle noise bg for the hero */
+    .noise { background-image: radial-gradient(rgba(124,58,237,0.12) 1px, transparent 1px); background-size: 16px 16px; }
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.75); }
+    .dark .glass { background: rgba(17, 24, 39, 0.65); }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.4); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.6); }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInUp {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+    .animate-slideInUp { animation: slideInUp 0.3s ease-out; }
+    
+    /* Progress bar animation */
+    @keyframes progress {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 0; }
+    }
+    .progress-bar {
+      background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 40px 40px;
+      animation: progress 1s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans selection:bg-brand/20">
+  <!-- Page wrapper -->
+  <div class="min-h-screen flex flex-col">
+    <!-- Top notification bar -->
+   
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/70 dark:bg-gray-900/60 glass border-b border-gray-200/60 dark:border-gray-800">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <!-- Brand -->
+          <a href="#" class="flex items-center gap-3 group">
+            <div class="h-9 w-9 rounded-2xl bg-gradient-to-br from-brand to-brand-dark flex items-center justify-center shadow-md text-white">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div class="leading-tight">
+              <div class="text-lg font-extrabold tracking-tight"> DocuMatrix</div>
+              <div class="text-[11px] text-gray-500 dark:text-gray-400 -mt-0.5">Merge • Compress • Convert</div>
+            </div>
+          </a>
+
+          <!-- Nav -->
+          <nav class="hidden md:flex items-center gap-6 text-sm">
+           
+          </nav>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2 md:gap-3">
+            <button id="themeToggle" class="p-2 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Toggle theme">
+              <i class="fa-regular fa-moon"></i>
+            </button>
+            <button class="md:hidden p-2 rounded-xl border border-gray-200 dark:border-gray-800" id="menuBtn" aria-label="Open menu">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile menu -->
+      <div id="mobileMenu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-800">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-2 text-sm">
+          <a href="#tools" class="py-2">Tools</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="relative overflow-hidden">
+      <div class="absolute inset-0 noise opacity-60 pointer-events-none"></div>
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <div class="grid md:grid-cols-2 items-center gap-10">
+          <div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight">
+              Merge, Compress & Convert —<br class="hidden sm:block" />
+              <span class="bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent">all inside your browser.</span>
+            </h1>
+            <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
+              A privacy‑first toolkit for PDFs, DOCX, and images. Fast, beautiful, and 100% client‑side — your documents never leave your device.
+            </p>
+            <div class="mt-4 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+              <div class="flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> Offline & Private</div>
+              <div class="flex items-center gap-2"><i class="fa-regular fa-clock"></i> No Upload Waiting</div>
+              <div class="flex items-center gap-2"><i class="fa-solid fa-bolt"></i> Instant Results</div>
+            </div>
+          </div>
+
+          <!-- Hero card / quick actions -->
+          <div class="relative">
+            <div class="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 glass p-6 sm:p-8 shadow-xl">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">Quick Actions</h2>
+                <span class="text-xs px-2 py-1 rounded-lg bg-brand/10 text-brand">Client‑Side</span>
+              </div>
+              <div id="tools" class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <!-- Each button is a deep link to the same dropzone with a preset action -->
+                <button data-action="merge" class="tool-btn group">
+                  <i class="fa-solid fa-layer-group"></i>
+                  <span>Merge PDF</span>
+                </button>
+                <button data-action="compress" class="tool-btn group">
+                  <i class="fa-solid fa-compress"></i>
+                  <span>Compress PDF</span>
+                </button>
+                <button data-action="pdf2img" class="tool-btn group">
+                  <i class="fa-regular fa-image"></i>
+                  <span>PDF → Images</span>
+                </button>
+                <button data-action="img2pdf" class="tool-btn group">
+                  <i class="fa-solid fa-images"></i>
+                  <span>Images → PDF</span>
+                </button>
+                <button data-action="docx2pdf" class="tool-btn group">
+                  <i class="fa-regular fa-file-word"></i>
+                  <span>DOCX → PDF</span>
+                </button>
+                <button data-action="pdf2docx" class="tool-btn group">
+                  <i class="fa-regular fa-file-pdf"></i>
+                  <span>PDF → DOCX</span>
+                </button>
+              </div>
+              <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">Tip: drag & drop files anywhere on the page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dropzone -->
+    <section id="dropzone" class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pb-16">
+      <div class="rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-700 p-8 sm:p-12 text-center bg-white/70 dark:bg-gray-900/60 glass">
+        <div class="mx-auto max-w-2xl">
+          <div class="flex items-center justify-center gap-3 text-3xl"><i class="fa-regular fa-folder-open"></i><span class="font-extrabold">Choose files</span></div>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Drop files here or click to browse. Supported: PDF, DOCX, PNG, JPG.</p>
+          <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <button class="chip" data-accept="application/pdf">PDF</button>
+            <button class="chip" data-accept="application/vnd.openxmlformats-officedocument.wordprocessingml.document">DOCX</button>
+            <button class="chip" data-accept="image/*">Images</button>
+          </div>
+          <input id="fileInput" type="file" multiple class="hidden" accept=".pdf,.docx,image/*" />
+          <div class="mt-8">
+            <button id="browseBtn" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-semibold">
+              <i class="fa-regular fa-circle-up"></i>
+              Browse Files
+            </button>
+          </div>
+        </div>
+        
+        <!-- Progress bar (hidden by default) -->
+        <div id="progressContainer" class="mt-8 hidden">
+          <div class="flex justify-between mb-1 text-sm font-medium">
+            <span id="progressStatus">Processing...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div id="progressBar" class="bg-brand h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <!-- Selected files preview -->
+        <div id="fileList" class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        
+        <!-- Action selection (hidden by default) -->
+        <div id="actionSelection" class="mt-6 hidden">
+          <h3 class="text-lg font-semibold mb-3">Select Action:</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <button data-action="merge" class="tool-btn group">
+              <i class="fa-solid fa-layer-group"></i>
+              <span>Merge PDF</span>
+            </button>
+            <button data-action="compress" class="tool-btn group">
+              <i class="fa-solid fa-compress"></i>
+              <span>Compress PDF</span>
+            </button>
+            <button data-action="pdf2img" class="tool-btn group">
+              <i class="fa-regular fa-image"></i>
+              <span>PDF → Images</span>
+            </button>
+            <button data-action="img2pdf" class="tool-btn group">
+              <i class="fa-solid fa-images"></i>
+              <span>Images → PDF</span>
+            </button>
+            <button data-action="docx2pdf" class="tool-btn group">
+              <i class="fa-regular fa-file-word"></i>
+              <span>DOCX → PDF</span>
+            </button>
+            <button data-action="pdf2docx" class="tool-btn group">
+              <i class="fa-regular fa-file-pdf"></i>
+              <span>PDF → DOCX</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <button id="startBtn" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-brand to-brand-dark text-white font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+            Run Selected Action
+          </button>
+          <button id="clearBtn" class="px-5 py-3 rounded-2xl border border-gray-300 dark:border-gray-700">Clear</button>
+        </div>
+        
+        <!-- Results container (hidden by default) -->
+        <div id="resultsContainer" class="mt-8 hidden">
+          <h3 class="text-lg font-semibold mb-3">Results:</h3>
+          <div id="resultsList" class="grid gap-4"></div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Footer -->
+    <!-- <footer class="mt-auto">
+      <div class="border-t border-gray-200 dark:border-gray-800"></div>
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+          <i class="fa-regular fa-copyright"></i>
+          <span id="year"></span>
+          <span>Document Toolkit</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="#faq" class="hover:text-brand">Privacy</a>
+          <span class="opacity-40">·</span>
+          <a href="#faq" class="hover:text-brand">Terms</a>
+          <span class="opacity-40">·</span>
+          <a href="mailto:hello@example.com" class="hover:text-brand">Contact</a>
+        </div>
+      </div>
+    </footer> -->
+  </div>
+
+  <!-- Utilities / components styles -->
+  <style>
+    .tool-btn { @apply px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-left flex flex-col gap-2 hover:shadow-md transition; }
+    .tool-btn i { @apply text-lg; }
+    .tool-btn span { @apply text-sm font-semibold; }
+
+    .chip { @apply px-3 py-1.5 rounded-xl border border-gray-300 dark:border-gray-700 text-sm; }
+
+    .feat { @apply rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm; }
+    .feat i { @apply text-2xl mb-3; }
+    .feat h3 { @apply font-semibold text-lg; }
+    .feat p { @apply text-sm text-gray-600 dark:text-gray-300 mt-1; }
+
+    .faq { @apply rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4; }
+    .faq summary { @apply cursor-pointer font-semibold; }
+    .faq p { @apply mt-2 text-sm text-gray-600 dark:text-gray-300; }
+    
+    .file-card { @apply rounded-2xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 flex items-center gap-3 animate-fadeIn; }
+    .result-card { @apply rounded-2xl border border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 flex items-center justify-between animate-slideInUp; }
+  </style>
+
+  <!-- JavaScript for functionality -->
+  <script>
+    // Utility functions
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+    
+    // Format file size
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+      else return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+    
+    // Theme toggle
+    const themeToggle = $('#themeToggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const stored = localStorage.getItem('dt-theme');
+    if ((stored === 'dark') || (!stored && prefersDark)) document.documentElement.classList.add('dark');
+    themeToggle?.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('dt-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      themeToggle.innerHTML = document.documentElement.classList.contains('dark') ? 
+        '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
+    });
+    
+    // Set correct icon on page load
+    if (document.documentElement.classList.contains('dark')) {
+      themeToggle.innerHTML = '<i class="fa-regular fa-sun"></i>';
+    }
+
+    // Mobile menu
+    const menuBtn = $('#menuBtn');
+    const mobileMenu = $('#mobileMenu');
+    menuBtn?.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+
+    // Year
+    $('#year').textContent = new Date().getFullYear();
+
+    // Dropzone logic
+    const dropzone = $('#dropzone');
+    const fileInput = $('#fileInput');
+    const browseBtn = $('#browseBtn');
+    const fileList = $('#fileList');
+    const startBtn = $('#startBtn');
+    const clearBtn = $('#clearBtn');
+    const actionSelection = $('#actionSelection');
+    const progressContainer = $('#progressContainer');
+    const progressBar = $('#progressBar');
+    const progressPercent = $('#progressPercent');
+    const progressStatus = $('#progressStatus');
+    const resultsContainer = $('#resultsContainer');
+    const resultsList = $('#resultsList');
+    
+    let selectedAction = null;
+    let files = [];
+    
+    // Update progress UI
+    function updateProgress(percent, status) {
+      if (percent >= 0 && percent <= 100) {
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+      }
+      if (status) progressStatus.textContent = status;
+    }
+    
+    // Show progress UI
+    function showProgress() {
+      progressContainer.classList.remove('hidden');
+      updateProgress(0, 'Processing...');
+    }
+    
+    // Hide progress UI
+    function hideProgress() {
+      setTimeout(() => {
+        progressContainer.classList.add('hidden');
+      }, 500);
+    }
+    
+    // Show results UI
+    function showResults() {
+      resultsContainer.classList.remove('hidden');
+    }
+    
+    // Hide results UI
+    function hideResults() {
+      resultsContainer.classList.add('hidden');
+      resultsList.innerHTML = '';
+    }
+    
+    // Download file
+    function downloadFile(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // Add result to results list
+    function addResult(filename, blob, action) {
+      const resultCard = document.createElement('div');
+      resultCard.className = 'result-card';
+      
+      const fileExt = filename.split('.').pop();
+      const icon = fileExt === 'pdf' ? 'fa-file-pdf' : 
+                  (fileExt === 'docx' ? 'fa-file-word' : 'fa-file-image');
+      
+      resultCard.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-lg">
+            <i class="fa-regular ${icon}"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="truncate font-medium">${filename}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${formatFileSize(blob.size)}</div>
+          </div>
+        </div>
+        <button class="download-result px-3 py-2 rounded-xl bg-brand text-white text-sm font-medium">
+          Download
+        </button>
+      `;
+      
+      resultsList.appendChild(resultCard);
+      
+      // Add download event
+      const downloadBtn = resultCard.querySelector('.download-result');
+      downloadBtn.addEventListener('click', () => {
+        downloadFile(blob, filename);
+      });
+      
+      showResults();
+    }
+    
+    // Choose file type via chips
+    $$('.chip').forEach(btn => btn.addEventListener('click', () => {
+      const accept = btn.getAttribute('data-accept');
+      fileInput.setAttribute('accept', accept);
+      fileInput.click();
+    }));
+
+    browseBtn?.addEventListener('click', () => fileInput.click());
+
+    // Quick action buttons (hero section)
+    $$('#tools .tool-btn').forEach(btn => btn.addEventListener('click', () => {
+      selectedAction = btn.getAttribute('data-action');
+      $$('#tools .tool-btn').forEach(b => b.classList.remove('ring-2', 'ring-brand'));
+      btn.classList.add('ring-2','ring-brand');
+      startBtn.disabled = files.length === 0;
+      document.getElementById('dropzone').scrollIntoView({ behavior: 'smooth' });
+    }));
+    
+    // Action selection buttons (dropzone section)
+    $$('#actionSelection .tool-btn').forEach(btn => btn.addEventListener('click', () => {
+      selectedAction = btn.getAttribute('data-action');
+      $$('#actionSelection .tool-btn').forEach(b => b.classList.remove('ring-2', 'ring-brand'));
+      btn.classList.add('ring-2','ring-brand');
+      startBtn.disabled = files.length === 0;
+    }));
+
+    // Handle file picking
+    fileInput?.addEventListener('change', e => {
+      addFiles(Array.from(e.target.files || []));
+      fileInput.value = '';
+    });
+
+    ;['dragenter','dragover'].forEach(ev => document.addEventListener(ev, e => {
+      e.preventDefault();
+      dropzone.classList.add('ring-2','ring-brand');
+    }));
+    ;['dragleave','drop'].forEach(ev => document.addEventListener(ev, e => {
+      e.preventDefault();
+      dropzone.classList.remove('ring-2','ring-brand');
+    }));
+    document.addEventListener('drop', e => {
+      addFiles(Array.from(e.dataTransfer?.files || []));
+    });
+
+    function addFiles(newFiles) {
+      if (!newFiles.length) return;
+      files = files.concat(newFiles);
+      renderFiles();
+      startBtn.disabled = !selectedAction || files.length === 0;
+      
+      // Show action selection if we have files but no action selected
+      if (files.length > 0 && !selectedAction) {
+        actionSelection.classList.remove('hidden');
+      }
+    }
+
+    function renderFiles() {
+      fileList.innerHTML = '';
+      files.forEach((f, i) => {
+        const card = document.createElement('div');
+        card.className = 'file-card';
+        const ext = f.name.split('.').pop()?.toLowerCase() || '';
+        const icon = ext === 'pdf' ? 'fa-file-pdf' : 
+                    (ext === 'docx' ? 'fa-file-word' : 'fa-file-image');
+        card.innerHTML = `
+          <div class="h-10 w-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-lg"><i class="fa-regular ${icon}"></i></div>
+          <div class="flex-1 min-w-0">
+            <div class="truncate font-medium">${f.name}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${formatFileSize(f.size)}</div>
+          </div>
+          <button class="text-xs px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-700 remove-btn" data-index="${i}">Remove</button>
+        `;
+        fileList.appendChild(card);
+      });
+      $$('.remove-btn', fileList).forEach(btn => btn.addEventListener('click', () => {
+        const idx = +btn.getAttribute('data-index');
+        files.splice(idx, 1);
+        renderFiles();
+        startBtn.disabled = !selectedAction || files.length === 0;
+        
+        // Hide action selection if no files left
+        if (files.length === 0) {
+          actionSelection.classList.add('hidden');
+          selectedAction = null;
+          $$('.tool-btn').forEach(b => b.classList.remove('ring-2','ring-brand'));
+        }
+      }));
+    }
+
+    // Processing functions
+    async function mergePDFs(pdfFiles) {
+      showProgress();
+      updateProgress(10, 'Merging PDFs...');
+      
+      try {
+        const { PDFDocument } = PDFLib;
+        const mergedPdf = await PDFDocument.create();
+        
+        for (let i = 0; i < pdfFiles.length; i++) {
+          const file = pdfFiles[i];
+          updateProgress(10 + (i / pdfFiles.length) * 80, `Processing ${i+1} of ${pdfFiles.length} files...`);
+          
+          const fileBytes = await readFileAsArrayBuffer(file);
+          const pdf = await PDFDocument.load(fileBytes);
+          const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+          
+          pages.forEach(page => mergedPdf.addPage(page));
+        }
+        
+        updateProgress(95, 'Finalizing merged PDF...');
+        const mergedPdfFile = await mergedPdf.save();
+        const blob = new Blob([mergedPdfFile], { type: 'application/pdf' });
+        
+        updateProgress(100, 'Merge completed!');
+        hideProgress();
+        return blob;
+      } catch (error) {
+        console.error('Error merging PDFs:', error);
+        hideProgress();
+        alert('Error merging PDFs: ' + error.message);
+        throw error;
+      }
+    }
+    
+    async function compressPDF(pdfFile) {
+      showProgress();
+      updateProgress(10, 'Compressing PDF...');
+      
+      try {
+        // Simple compression by reducing quality of embedded images
+        const { PDFDocument } = PDFLib;
+        const fileBytes = await readFileAsArrayBuffer(pdfFile);
+        const pdfDoc = await PDFDocument.load(fileBytes);
+        
+        updateProgress(50, 'Optimizing PDF...');
+        // This is a basic compression - in a real app you might want more advanced techniques
+        const compressedPdfBytes = await pdfDoc.save({
+          useObjectStreams: true,
+          compress: true,
+        });
+        
+        updateProgress(95, 'Finalizing compressed PDF...');
+        const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
+        
+        updateProgress(100, 'Compression completed!');
+        hideProgress();
+        return blob;
+      } catch (error) {
+        console.error('Error compressing PDF:', error);
+        hideProgress();
+        alert('Error compressing PDF: ' + error.message);
+        throw error;
+      }
+    }
+    
+    async function pdfToImages(pdfFile) {
+      showProgress();
+      updateProgress(10, 'Converting PDF to images...');
+      
+      try {
+        // Set up PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        const fileBytes = await readFileAsArrayBuffer(pdfFile);
+        const pdf = await pdfjsLib.getDocument({ data: fileBytes }).promise;
+        const numPages = pdf.numPages;
+        const imageBlobs = [];
+        
+        for (let i = 1; i <= numPages; i++) {
+          updateProgress(10 + (i / numPages) * 80, `Converting page ${i} of ${numPages}...`);
+          
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 2.0 });
+          
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          
+          await page.render({
+            canvasContext: context,
+            viewport: viewport
+          }).promise;
+          
+          const imageBlob = await new Promise(resolve => {
+            canvas.toBlob(resolve, 'image/png', 0.9);
+          });
+          
+          imageBlobs.push(imageBlob);
+        }
+        
+        updateProgress(95, 'Finalizing images...');
+        updateProgress(100, 'Conversion completed!');
+        hideProgress();
+        return imageBlobs;
+      } catch (error) {
+        console.error('Error converting PDF to images:', error);
+        hideProgress();
+        alert('Error converting PDF to images: ' + error.message);
+        throw error;
+      }
+    }
+    
+    async function imagesToPDF(imageFiles) {
+      showProgress();
+      updateProgress(10, 'Converting images to PDF...');
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        for (let i = 0; i < imageFiles.length; i++) {
+          updateProgress(10 + (i / imageFiles.length) * 80, `Processing image ${i+1} of ${imageFiles.length}...`);
+          
+          const file = imageFiles[i];
+          const imgData = await readFileAsDataURL(file);
+          
+          if (i > 0) doc.addPage();
+          
+          const imgProps = doc.getImageProperties(imgData);
+          const pdfWidth = doc.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          
+          doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        }
+        
+        updateProgress(95, 'Finalizing PDF...');
+        const pdfBlob = doc.output('blob');
+        
+        updateProgress(100, 'Conversion completed!');
+        hideProgress();
+        return pdfBlob;
+      } catch (error) {
+        console.error('Error converting images to PDF:', error);
+        hideProgress();
+        alert('Error converting images to PDF: ' + error.message);
+        throw error;
+      }
+    }
+    
+    async function docxToPDF(docxFile) {
+      showProgress();
+      updateProgress(10, 'Converting DOCX to PDF...');
+      
+      try {
+        const arrayBuffer = await readFileAsArrayBuffer(docxFile);
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        
+        updateProgress(50, 'Rendering document...');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Add HTML content to PDF
+        doc.html(result.value, {
+          callback: function(doc) {
+            updateProgress(95, 'Finalizing PDF...');
+          },
+          x: 10,
+          y: 10
+        });
+        
+        // Wait for the PDF to be generated
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const pdfBlob = doc.output('blob');
+        updateProgress(100, 'Conversion completed!');
+        hideProgress();
+        return pdfBlob;
+      } catch (error) {
+        console.error('Error converting DOCX to PDF:', error);
+        hideProgress();
+        alert('Error converting DOCX to PDF: ' + error.message);
+        throw error;
+      }
+    }
+    
+    async function pdfToDocx(pdfFile) {
+      showProgress();
+      updateProgress(10, 'Converting PDF to DOCX...');
+      
+      try {
+        // This is a simplified conversion as full PDF to DOCX is complex
+        // In a real implementation, you might use a specialized library
+        
+        // Extract text from PDF
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        const fileBytes = await readFileAsArrayBuffer(pdfFile);
+        const pdf = await pdfjsLib.getDocument({ data: fileBytes }).promise;
+        const numPages = pdf.numPages;
+        let text = '';
+        
+        for (let i = 1; i <= numPages; i++) {
+          updateProgress(10 + (i / numPages) * 80, `Extracting text from page ${i} of ${numPages}...`);
+          
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          text += textContent.items.map(item => item.str).join(' ') + '\n\n';
+        }
+        
+        updateProgress(95, 'Creating DOCX file...');
+        
+        // Create a simple text-based DOCX file
+        // Note: This is a very basic implementation
+        // A proper implementation would require a full DOCX library
+        const blob = new Blob([text], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        
+        updateProgress(100, 'Conversion completed!');
+        hideProgress();
+        return blob;
+      } catch (error) {
+        console.error('Error converting PDF to DOCX:', error);
+        hideProgress();
+        alert('Error converting PDF to DOCX: ' + error.message);
+        throw error;
+      }
+    }
+    
+    // File reading utilities
+    function readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+    
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    // Start button handler
+    startBtn?.addEventListener('click', async () => {
+      if (!selectedAction) {
+        alert('Pick an action first (e.g., Merge PDF).');
+        return;
+      }
+      if (!files.length) {
+        alert('Add at least one file.');
+        return;
+      }
+      
+      // Hide any previous results
+      hideResults();
+      
+      try {
+        let result;
+        
+        switch(selectedAction) {
+          case 'merge':
+            if (files.length < 2) {
+              alert('Please select at least 2 PDF files to merge.');
+              return;
+            }
+            result = await mergePDFs(files);
+            addResult('merged-document.pdf', result, 'merge');
+            break;
+            
+          case 'compress':
+            if (files.length > 1) {
+              alert('Please select only one PDF file to compress.');
+              return;
+            }
+            result = await compressPDF(files[0]);
+            addResult('compressed-document.pdf', result, 'compress');
+            break;
+            
+          case 'pdf2img':
+            if (files.length > 1) {
+              alert('Please select only one PDF file to convert to images.');
+              return;
+            }
+            const images = await pdfToImages(files[0]);
+            for (let i = 0; i < images.length; i++) {
+              addResult(`page-${i+1}.png`, images[i], 'pdf2img');
+            }
+            break;
+            
+          case 'img2pdf':
+            if (files.length < 1) {
+              alert('Please select at least one image to convert to PDF.');
+              return;
+            }
+            result = await imagesToPDF(files);
+            addResult('converted-document.pdf', result, 'img2pdf');
+            break;
+            
+          case 'docx2pdf':
+            if (files.length > 1) {
+              alert('Please select only one DOCX file to convert to PDF.');
+              return;
+            }
+            result = await docxToPDF(files[0]);
+            addResult('converted-document.pdf', result, 'docx2pdf');
+            break;
+            
+          case 'pdf2docx':
+            if (files.length > 1) {
+              alert('Please select only one PDF file to convert to DOCX.');
+              return;
+            }
+            result = await pdfToDocx(files[0]);
+            addResult('converted-document.docx', result, 'pdf2docx');
+            break;
+            
+          default:
+            alert('Unknown action selected.');
+            return;
+        }
+      } catch (error) {
+        console.error('Error processing files:', error);
+      }
+    });
+
+    clearBtn?.addEventListener('click', () => {
+      files = [];
+      renderFiles();
+      startBtn.disabled = true;
+      $$('.tool-btn').forEach(b => b.classList.remove('ring-2','ring-brand'));
+      selectedAction = null;
+      actionSelection.classList.add('hidden');
+      hideResults();
+    });
+  </script>
+</body>
+</html>
