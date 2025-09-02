@@ -87,7 +87,9 @@
   <!-- Page wrapper -->
   <div class="min-h-screen flex flex-col">
     <!-- Top notification bar -->
-   
+    <div class="hidden sm:block bg-gradient-to-r from-brand to-brand-dark text-white text-center text-sm py-2">
+      <span class="font-semibold">100% Client‑Side</span> — your files never leave your browser.
+    </div>
 
     <!-- Header -->
     <header class="sticky top-0 z-50 bg-white/70 dark:bg-gray-900/60 glass border-b border-gray-200/60 dark:border-gray-800">
@@ -99,14 +101,17 @@
               <i class="fa-solid fa-file-pdf"></i>
             </div>
             <div class="leading-tight">
-              <div class="text-lg font-extrabold tracking-tight"> DocuMatrix</div>
+              <div class="text-lg font-extrabold tracking-tight">DocuMatrix</div>
               <div class="text-[11px] text-gray-500 dark:text-gray-400 -mt-0.5">Merge • Compress • Convert</div>
             </div>
           </a>
 
           <!-- Nav -->
           <nav class="hidden md:flex items-center gap-6 text-sm">
-           
+            <a href="#features" class="hover:text-brand">Features</a>
+            <a href="#tools" class="hover:text-brand">Tools</a>
+            <a href="#faq" class="hover:text-brand">FAQ</a>
+            <a href="#dropzone" class="px-3 py-1.5 rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-semibold">Open App</a>
           </nav>
 
           <!-- Actions -->
@@ -123,7 +128,10 @@
       <!-- Mobile menu -->
       <div id="mobileMenu" class="md:hidden hidden border-t border-gray-200 dark:border-gray-800">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex flex-col gap-2 text-sm">
+          <a href="#features" class="py-2">Features</a>
           <a href="#tools" class="py-2">Tools</a>
+          <a href="#faq" class="py-2">FAQ</a>
+          <a href="#dropzone" class="py-2 font-semibold text-brand">Open App</a>
         </div>
       </div>
     </header>
@@ -141,6 +149,16 @@
             <p class="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
               A privacy‑first toolkit for PDFs, DOCX, and images. Fast, beautiful, and 100% client‑side — your documents never leave your device.
             </p>
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+              <a href="#dropzone" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-brand to-brand-dark text-white font-semibold shadow-md">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                Start Editing
+              </a>
+              <a href="#features" class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-gray-300 dark:border-gray-700 font-semibold">
+                <i class="fa-regular fa-circle-play"></i>
+                See Features
+              </a>
+            </div>
             <div class="mt-4 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
               <div class="flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> Offline & Private</div>
               <div class="flex items-center gap-2"><i class="fa-regular fa-clock"></i> No Upload Waiting</div>
@@ -269,9 +287,54 @@
       </div>
     </section>
 
+    <!-- Features -->
+    <section id="features" class="bg-gray-100/60 dark:bg-gray-800/40">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+        <div class="text-center max-w-2xl mx-auto">
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Why Document Toolkit?</h2>
+          <p class="mt-3 text-gray-600 dark:text-gray-300">Designed for students and professionals who need trustworthy tools without uploading sensitive files.</p>
+        </div>
+        <div class="mt-10 grid md:grid-cols-3 gap-6">
+          <div class="feat">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h3>Privacy‑First</h3>
+            <p>Everything runs locally in your browser. No servers, no tracking, no data leaves your device.</p>
+          </div>
+          <div class="feat">
+            <i class="fa-solid fa-rocket"></i>
+            <h3>Fast & Reliable</h3>
+            <p>Optimized WebAssembly workers and streaming pipelines feel instantaneous for most files.</p>
+          </div>
+          <div class="feat">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <h3>Simple, Beautiful UI</h3>
+            <p>Clean controls, keyboard shortcuts, and clear progress indicators keep you in flow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center">Frequently Asked Questions</h2>
+      <div class="mt-8 space-y-4">
+        <details class="faq">
+          <summary>Are my files uploaded to a server?</summary>
+          <p>No. All processing happens in your browser using client‑side libraries (WebAssembly/JS). Your files never leave your device.</p>
+        </details>
+        <details class="faq">
+          <summary>Which file types are supported?</summary>
+          <p>PDF, DOCX, PNG, and JPG at launch. More formats are planned.</p>
+        </details>
+        <details class="faq">
+          <summary>Is it free to use?</summary>
+          <p>Yes. You can use all core tools for free. If we add pro features later, the basics will stay free.</p>
+        </details>
+      </div>
+    </section>
 
     <!-- Footer -->
-    <!-- <footer class="mt-auto">
+    <footer class="mt-auto">
       <div class="border-t border-gray-200 dark:border-gray-800"></div>
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -287,7 +350,7 @@
           <a href="mailto:hello@example.com" class="hover:text-brand">Contact</a>
         </div>
       </div>
-    </footer> -->
+    </footer>
   </div>
 
   <!-- Utilities / components styles -->
